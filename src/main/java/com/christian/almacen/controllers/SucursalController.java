@@ -1,10 +1,13 @@
 package com.christian.almacen.controllers;
 
+import com.christian.almacen.docs.ProblemaDoc;
 import com.christian.almacen.dto.sucursales.SucursalRequest;
 import com.christian.almacen.dto.sucursales.SucursalResponse;
 import com.christian.almacen.services.sucursales.SucursalService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -19,10 +22,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/sucursales")
 @RequiredArgsConstructor
-@Tag(name = "API Sucursales", description = "Gestión de Sucursales")
+@Tag(name = "Sucursales", description = "Gestión de Sucursales")
+// Errores que pueden ocurrir en cualquier endpoint:
+@ApiResponse(responseCode = "400", description = "Datos o parámetros inválidos",
+        content = @Content(mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemaDoc.class)))
+@ApiResponse(responseCode = "500", description = "Error interno del servidor",
+        content = @Content(mediaType = "application/problem+json",
+                schema = @Schema(implementation = ProblemaDoc.class)))
 public class SucursalController {
 
-    private final SucursalService sucursalService;
+    public final SucursalService sucursalService;
 
     @GetMapping
     @Operation(summary = "Listar sucursales", description = "Obtiene todas las sucursales registradas.")
@@ -34,6 +44,9 @@ public class SucursalController {
     @GetMapping("/{id}")
     @Operation(summary = "Obtener sucursal por ID")
     @ApiResponse(responseCode = "200", description = "Sucursal encontrada")
+    @ApiResponse(responseCode = "404", description = "La sucursal no existe",
+            content = @Content(mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemaDoc.class)))
     public ResponseEntity<SucursalResponse> obtenerPorId(
             @Parameter(description = "Id de la sucursal", example = "1")
             @PathVariable @Positive(message = "El ID debe ser positivo") Long id
@@ -44,6 +57,9 @@ public class SucursalController {
     @PostMapping
     @Operation(summary = "Registrar una nueva sucursal")
     @ApiResponse(responseCode = "201", description = "Sucursal creada")
+    @ApiResponse(responseCode = "409", description = "Conflicto con datos de la sucursal",
+            content = @Content(mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemaDoc.class)))
     public ResponseEntity<SucursalResponse> registrar(
             @Valid @RequestBody SucursalRequest request
     ) {
@@ -54,6 +70,12 @@ public class SucursalController {
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar una sucursal existente")
     @ApiResponse(responseCode = "200", description = "Sucursal actualizada")
+    @ApiResponse(responseCode = "404", description = "La sucursal no existe",
+            content = @Content(mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemaDoc.class)))
+    @ApiResponse(responseCode = "409", description = "Conflicto con nuevos datos de la sucursal",
+            content = @Content(mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemaDoc.class)))
     public ResponseEntity<SucursalResponse> actualizar(
             @Parameter(description = "Id de la sucursal", example = "1")
             @PathVariable @Positive(message = "El ID debe ser positivo") Long id,
@@ -65,6 +87,12 @@ public class SucursalController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar una sucursal")
     @ApiResponse(responseCode = "204", description = "Sucursal eliminada")
+    @ApiResponse(responseCode = "404", description = "La sucursal no existe",
+            content = @Content(mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemaDoc.class)))
+    @ApiResponse(responseCode = "409", description = "La sucursal está en uso y no puede eliminarse",
+            content = @Content(mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemaDoc.class)))
     public ResponseEntity<Void> eliminar(
             @Parameter(description = "Id de la sucursal", example = "1")
             @PathVariable @Positive(message = "El ID debe ser positivo") Long id
